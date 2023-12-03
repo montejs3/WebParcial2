@@ -19,4 +19,3 @@ export class BusinessErrorsInterceptor implements NestInterceptor {
         }));
     }
 }
-

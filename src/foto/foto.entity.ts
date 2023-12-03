@@ -6,7 +6,7 @@ import { AlbumEntity } from '../album/album.entity';
 
 @Entity()
 export class FotoEntity {
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: string;
 
     @Column()

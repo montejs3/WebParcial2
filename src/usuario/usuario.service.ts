@@ -15,7 +15,7 @@ export class UsuarioService {
         return await this.usuarioRepository.find();
     }
 
-    async findOnes(id: string): Promise<UsuarioEntity> {
+    async findOne(id: string): Promise<UsuarioEntity> {
         const usuario: UsuarioEntity = await this.usuarioRepository.findOne( {where:{id}})
         if (!usuario) 
             throw new BusinessLogicException("The usuario with the given id was not found", BusinessError.NOT_FOUND);
@@ -31,6 +31,8 @@ export class UsuarioService {
             throw new BusinessLogicException("The usuario dosent have the requirements", BusinessError.PRECONDITION_FAILED);
         }
     }
+
+
 
     
 }

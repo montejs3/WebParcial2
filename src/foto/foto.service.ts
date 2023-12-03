@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FotoEntity } from './foto.entity';
 import { BusinessLogicException , BusinessError} from '../shared/errors/business-errors';
+import { AlbumEntity } from '../album/album.entity';
 
 
 @Injectable()
@@ -10,14 +11,15 @@ export class FotoService {
     constructor(
         @InjectRepository(FotoEntity)
         private readonly fotoRepository: Repository<FotoEntity>,
+        @InjectRepository(AlbumEntity)
+        private readonly albumRepository: Repository<AlbumEntity>,
     ) {}
 
     async findAll(): Promise<FotoEntity[]> {
         return await this.fotoRepository.find();
     }
 
-    async findOnes(id: string): Promise<FotoEntity> {
-        console.log('Provided ID:', id);
+    async findOne(id: string): Promise<FotoEntity> {
         const foto: FotoEntity = await this.fotoRepository.findOne( {where:{id}})
         if (!foto) 
             throw new BusinessLogicException("The foto with the given id was not found", BusinessError.NOT_FOUND);
@@ -26,19 +28,34 @@ export class FotoService {
 
     async create(foto: FotoEntity): Promise<FotoEntity> {
        
-        if ((foto.ISO > 100 || foto.ISO < 6400) && (foto.velObturacion >2 || foto.velObturacion < 250) && (foto.apertura > 1|| foto.apertura < 32)){
-            return await this.fotoRepository.save(foto);
-        }
-        else{
-            throw new BusinessLogicException("The foto dosent have the requirements", BusinessError.PRECONDITION_FAILED);
-        }
+        if(foto.ISO < 100 || foto.ISO > 6400)
+            throw new BusinessLogicException("The ISO must be between 100 and 6400", BusinessError.BAD_REQUEST);
+        if(foto.apertura < 1.4 || foto.apertura > 32)
+            throw new BusinessLogicException("The aperture must be between 1.4 and 22", BusinessError.BAD_REQUEST);
+        if(foto.velObturacion < 2 || foto.velObturacion > 250)
+            throw new BusinessLogicException("The shutter speed must be between 1 and 4000", BusinessError.BAD_REQUEST);
+
+        return await this.fotoRepository.save(foto);
     }
 
     async delete(id: string) {
-        const foto: FotoEntity = await this.fotoRepository.findOne( {where:{id} });
+        const foto: FotoEntity = await this.fotoRepository.findOne( {where:{id} , relations: ["album"]});
         if (!foto) 
             throw new BusinessLogicException("The foto with the given id was not found", BusinessError.NOT_FOUND);
-        return await this.fotoRepository.remove(foto);
+
+        if(foto.album != null){
+            const album: AlbumEntity = await this.albumRepository.findOne( {where:{id: foto.album.id} , relations: ["fotos"]});
+            if(album.fotos.length == 1){
+                await this.fotoRepository.remove(foto);
+                await this.albumRepository.delete(album.id);
+            }
+        }
+        else{
+            await this.fotoRepository.remove(foto);
+        }
+        
+
+
     }
 
 }
