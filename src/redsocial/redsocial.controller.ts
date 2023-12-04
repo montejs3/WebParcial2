@@ -5,9 +5,13 @@ import { RedsocialEntity } from './redsocial.entity';
 import { Body } from '@nestjs/common';
 import { Post } from '@nestjs/common';
 import { RedsocialDto } from './redsocial.dto';
+import { BusinessErrorsInterceptor } from '../shared/interceptors/business-errors.interceptor';
+import { UseInterceptors } from '@nestjs/common';
+
 
 
 @Controller('redsocial')
+@UseInterceptors(BusinessErrorsInterceptor)
 export class RedsocialController {
     constructor( private readonly redSocialService: RedsocialService) {}
 
